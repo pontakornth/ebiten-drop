@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
@@ -40,6 +39,12 @@ func (g *Game) Update() error {
 	} else if ebiten.IsKeyPressed(ebiten.KeyLeft) {
 		g.bucketX -= 300 * TICK_RATE
 	}
+	// Mouse movement
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButton0) {
+		mx, _ := ebiten.CursorPositionF()
+		g.bucketX = float32(mx) - 16
+	}
+	// clamp
 	if g.bucketX < 0 {
 		g.bucketX = 0
 	}
@@ -54,7 +59,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// Draw bucket
 	c := color.RGBA{R: 125, G: 125, B: 127}
 	vector.FillRect(screen, g.bucketX, GAME_HEIGHT-32, 32, 32, c, true)
-	ebitenutil.DebugPrint(screen, "Hello, World!")
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
