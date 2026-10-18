@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 	"log"
+	"math"
 	"math/rand/v2"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
@@ -47,7 +50,16 @@ func (g *Game) Update() error {
 	}
 
 	// Drop movement
-	for i := range g.drops {
+	for i := len(g.drops) - 1; i >= 0; i-- {
+		// Check collision
+		x := g.drops[i].x + 16
+		y := g.drops[i].y + 16
+		distanceSqr := math.Pow(float64(x-g.bucketX), 2) + math.Pow(float64(y-(GAME_HEIGHT-16.0)), 2)
+		if distanceSqr <= math.Pow(32, 2) {
+			g.drops = g.drops[:len(g.drops)-1]
+			g.score += 100
+			continue
+		}
 		g.drops[i].y += 150 * TICK_RATE
 	}
 
@@ -88,6 +100,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		vector.FillRect(screen, d.x, d.y, 32, 32, c, false)
 		vector.StrokeCircle(screen, d.x+16, d.y+16, 16, 1, color.RGBA{G: 255, A: 255}, false)
 	}
+
+	// TODO: Use actual font
+	scoreText := fmt.Sprintf("Score: %03d", g.score)
+	ebitenutil.DebugPrint(screen, scoreText)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
