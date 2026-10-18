@@ -3,6 +3,7 @@ package main
 import (
 	"image/color"
 	"log"
+	"math/rand/v2"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -12,6 +13,7 @@ const (
 	TICK_RATE   = 1 / 60.0
 	GAME_WIDTH  = 320
 	GAME_HEIGHT = 240
+	TILE_SIZE   = 32
 )
 
 type Vector2D struct {
@@ -21,9 +23,10 @@ type Vector2D struct {
 
 type Game struct {
 	bucketX float32
-	drops   []Vector2D
-	score   int
-	timer   int
+	// TODO: Substitute with objects pools (or very short array)
+	drops []Vector2D
+	score int
+	timer int
 }
 
 func (g *Game) InitGameState() {
@@ -33,6 +36,21 @@ func (g *Game) InitGameState() {
 }
 
 func (g *Game) Update() error {
+	g.timer += 1
+	// Around 5 seconds (300 ticks)
+	if g.timer > 300 {
+		// Spawn drop
+		dx := rand.Float32() * (GAME_WIDTH - 32)
+		d := Vector2D{x: dx, y: 0}
+		g.drops = append(g.drops, d)
+		g.timer = 0
+	}
+
+	// Drop movement
+	for i := range g.drops {
+		g.drops[i].y += 150 * TICK_RATE
+	}
+
 	// Bucket movement
 	if ebiten.IsKeyPressed(ebiten.KeyRight) {
 		g.bucketX += 300 * TICK_RATE
@@ -57,8 +75,19 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Clear()
 	// Draw bucket
-	c := color.RGBA{R: 125, G: 125, B: 127}
-	vector.FillRect(screen, g.bucketX, GAME_HEIGHT-32, 32, 32, c, true)
+	// TODO: Use image instead of rect
+	c := color.RGBA{R: 125, G: 125, B: 127, A: 255}
+	vector.FillRect(screen, g.bucketX, GAME_HEIGHT-32, 32, 32, c, false)
+	// TODO: Remove debug circle
+	vector.StrokeCircle(screen, g.bucketX+16, GAME_HEIGHT-16, 16, 1, color.White, false)
+
+	// Draw drops
+	for _, d := range g.drops {
+		// TODO: Use image instead of rect
+		c := color.RGBA{R: 100, G: 149, B: 237, A: 255}
+		vector.FillRect(screen, d.x, d.y, 32, 32, c, false)
+		vector.StrokeCircle(screen, d.x+16, d.y+16, 16, 1, color.RGBA{G: 255, A: 255}, false)
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
